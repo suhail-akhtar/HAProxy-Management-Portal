@@ -1,0 +1,5 @@
+{
+  "name": "HAProxy Management Portal",
+  "description": "Enterprise-grade HAProxy Load Balancer Management Interface with real-time visualization.",
+  "requestFramePermissions": []
+}
