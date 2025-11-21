@@ -1,12 +1,17 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '../types';
+import { apiService, APIError } from '../services/apiService';
+import { useToast } from './ToastContext';
+import { handleAPIError } from '../services/errorHandler';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string) => void;
-  logout: () => void;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,39 +19,83 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Check for existing session
-    const storedUser = localStorage.getItem('haproxy_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    }
+    const validateSession = async () => {
+      const token = apiService.getToken();
+      if (token) {
+        try {
+          const response = await apiService.validateToken();
+          if (response.success && response.user) {
+            setUser(response.user);
+            setIsAuthenticated(true);
+          } else {
+            // Token invalid, clear it
+            apiService.setToken(null);
+            localStorage.removeItem('haproxy_user');
+          }
+        } catch (err) {
+          // Token validation failed, clear session
+          apiService.setToken(null);
+          localStorage.removeItem('haproxy_user');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    validateSession();
   }, []);
 
-  const login = (email: string) => {
-    // Mock login logic
-    const mockUser: User = {
-      id: 'u1',
-      name: 'Admin User',
-      email: email,
-      role: 'admin',
-      avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=0ea5e9&color=fff',
-      lastLogin: new Date().toISOString()
-    };
-    setUser(mockUser);
-    setIsAuthenticated(true);
-    localStorage.setItem('haproxy_user', JSON.stringify(mockUser));
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      const response = await apiService.login(email, password);
+      
+      if (response.success && response.user) {
+        setUser(response.user);
+        setIsAuthenticated(true);
+        localStorage.setItem('haproxy_user', JSON.stringify(response.user));
+        showToast('Login successful', 'success');
+        setIsLoading(false);
+        return true;
+      } else {
+        setError('Login failed');
+        showToast('Login failed', 'error');
+        setIsLoading(false);
+        return false;
+      }
+    } catch (err) {
+      const errorMessage = handleAPIError(err, 'login', showToast);
+      setError(errorMessage);
+      setIsLoading(false);
+      return false;
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('haproxy_user');
+  const logout = async () => {
+    setIsLoading(true);
+    
+    try {
+      await apiService.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('haproxy_user');
+      showToast('Logged out successfully', 'info');
+      setIsLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, error }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,19 +5,13 @@ import { Button } from '../components/ui/Button';
 import { Icons } from '../components/ui/Icons';
 
 export const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      login(email);
-      setLoading(false);
-    }, 1000);
+    await login(email, password);
   };
 
   return (
@@ -69,14 +63,27 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
+          {error && (
+            <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
           <div>
-            <Button type="submit" className="w-full flex justify-center" isLoading={loading}>
+            <Button type="submit" className="w-full flex justify-center" isLoading={isLoading}>
               Sign in
             </Button>
           </div>
           
-          <div className="flex items-center justify-center text-xs text-slate-500">
-             <span>Default credentials: Any email / Any password</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
+              <span>Test credentials:</span>
+            </div>
+            <div className="text-xs text-slate-600 dark:text-slate-400 text-center space-y-1">
+              <div>Admin: admin@haproxy.local / admin123</div>
+              <div>Editor: devops@haproxy.local / devops123</div>
+              <div>Viewer: viewer@haproxy.local / viewer123</div>
+            </div>
           </div>
         </form>
       </div>
