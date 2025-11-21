@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { config } from '../config';
 import { dataStore } from '../services/dataStore';
 import { LoginRequest, LoginResponse } from '../models/types';
@@ -18,7 +19,19 @@ export const login = async (req: Request<{}, {}, LoginRequest>, res: Response) =
     // Find user
     const user = dataStore.getUserByEmail(email);
     
-    if (!user || user.password !== password) {
+    if (!user || !user.password) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials',
+      });
+    }
+
+    // Compare password (in production, passwords should be hashed)
+    // For now, using plain text comparison for demo purposes
+    // TODO: Hash passwords with bcrypt before storing
+    const isPasswordValid = user.password === password;
+    
+    if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',
@@ -31,10 +44,9 @@ export const login = async (req: Request<{}, {}, LoginRequest>, res: Response) =
       email: user.email,
       role: user.role,
     };
-    const options: jwt.SignOptions = { 
-      expiresIn: config.jwt.expiresIn as any
-    };
-    const token = jwt.sign(payload, config.jwt.secret, options);
+    const token = jwt.sign(payload, config.jwt.secret, { 
+      expiresIn: '7d'  // 7 days
+    });
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;

@@ -17,7 +17,7 @@ export class WebSocketService {
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('Client connected to WebSocket');
 
-      ws.on('message', (message: string) => {
+      ws.on('message', (message: WebSocket.RawData) => {
         try {
           const data = JSON.parse(message.toString());
           this.handleMessage(ws, data);

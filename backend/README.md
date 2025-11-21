@@ -174,6 +174,18 @@ The data store interface is abstracted in `services/dataStore.ts`.
 - Request compression
 - Error sanitization
 
+⚠️ **Important for Production:**
+- Currently using plain text password comparison for demo purposes
+- Before deploying to production, implement bcrypt password hashing:
+  ```typescript
+  // Hash password when creating user
+  const hashedPassword = await bcrypt.hash(password, 10);
+  
+  // Compare password when logging in
+  const isValid = await bcrypt.compare(password, user.password);
+  ```
+- The `bcryptjs` package is already included in dependencies
+
 ## Testing
 
 ```bash
