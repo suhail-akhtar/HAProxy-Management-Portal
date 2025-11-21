@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '../types';
 import { apiService, APIError } from '../services/apiService';
 import { useToast } from './ToastContext';
+import { handleAPIError } from '../services/errorHandler';
 
 interface AuthContextType {
   user: User | null;
@@ -70,11 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof APIError 
-        ? err.message 
-        : 'An error occurred during login. Please check your connection.';
+      const errorMessage = handleAPIError(err, 'login', showToast);
       setError(errorMessage);
-      showToast(errorMessage, 'error');
       setIsLoading(false);
       return false;
     }

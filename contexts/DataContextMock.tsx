@@ -268,11 +268,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate generation
       setTimeout(() => {
         setData(p => {
-           if(!p) return null;
-           return {
-             ...p,
-             reports: p.reports.map(r => r.id === newReport.id ? { ...r, status: 'ready', size: '1.2 MB' } : r)
-           }
+          if (!p) return null;
+          return {
+            ...p,
+            reports: p.reports.map(r => r.id === newReport.id ? { ...r, status: 'ready', size: '1.2 MB' } : r)
+          }
         });
       }, 3000);
 

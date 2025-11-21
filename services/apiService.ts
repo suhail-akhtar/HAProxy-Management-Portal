@@ -6,8 +6,11 @@
  * for all API operations.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5555/api';
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:5555/ws';
+// API Configuration
+const API_CONFIG = {
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5555/api',
+  WS_URL: import.meta.env.VITE_WS_URL || 'ws://localhost:5555/ws',
+};
 
 class APIError extends Error {
   constructor(message: string, public status?: number, public response?: any) {
@@ -66,7 +69,7 @@ class APIService {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+      const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, config);
       
       // Handle different response types
       const contentType = response.headers.get('content-type');
@@ -290,7 +293,7 @@ class APIService {
   // ========== WebSocket ==========
 
   createWebSocket(onMessage: (data: any) => void, onError?: (error: Event) => void): WebSocket {
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(API_CONFIG.WS_URL);
     
     ws.onopen = () => {
       console.log('WebSocket connected');

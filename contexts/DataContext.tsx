@@ -3,6 +3,7 @@ import { AppState, Frontend, Backend, Server, ACL, ConfigVersion, AppSettings, A
 import { apiService, APIError } from '../services/apiService';
 import { useToast } from './ToastContext';
 import { generateInitialData } from '../services/mockDataService';
+import { handleAPIError } from '../services/errorHandler';
 
 interface DataContextType {
   data: AppState;
@@ -37,15 +38,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { showToast } = useToast();
   const [ws, setWs] = useState<WebSocket | null>(null);
 
-  const handleError = (err: any, operation: string) => {
-    const errorMessage = err instanceof APIError 
-      ? err.message 
-      : `Failed to ${operation}. Please check your connection.`;
-    setError(errorMessage);
-    showToast(errorMessage, 'error');
-    console.error(`Error in ${operation}:`, err);
-  };
-
   // Fetch all data from API
   const refreshData = useCallback(async () => {
     setIsLoading(true);
@@ -64,7 +56,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
       }
     } catch (err) {
-      handleError(err, 'fetch data');
+      const errorMessage = handleAPIError(err, 'fetch data', showToast);
+      setError(errorMessage);
       // Keep using existing data on error
     } finally {
       setIsLoading(false);
@@ -126,7 +119,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'create frontend');
+      handleAPIError(err, 'create frontend');
       throw err;
     }
   };
@@ -139,7 +132,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'update frontend');
+      handleAPIError(err, 'update frontend');
       throw err;
     }
   };
@@ -152,7 +145,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete frontend');
+      handleAPIError(err, 'delete frontend');
       throw err;
     }
   };
@@ -167,7 +160,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'create backend');
+      handleAPIError(err, 'create backend');
       throw err;
     }
   };
@@ -180,7 +173,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete backend');
+      handleAPIError(err, 'delete backend');
       throw err;
     }
   };
@@ -196,7 +189,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await updateServerStatus(backendId, serverId, newStatus);
       }
     } catch (err) {
-      handleError(err, 'toggle server status');
+      handleAPIError(err, 'toggle server status');
       throw err;
     }
   };
@@ -209,7 +202,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'update server status');
+      handleAPIError(err, 'update server status');
       throw err;
     }
   };
@@ -224,7 +217,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'create ACL');
+      handleAPIError(err, 'create ACL');
       throw err;
     }
   };
@@ -237,7 +230,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete ACL');
+      handleAPIError(err, 'delete ACL');
       throw err;
     }
   };
@@ -252,7 +245,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'save configuration');
+      handleAPIError(err, 'save configuration');
       throw err;
     }
   };
@@ -265,7 +258,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'rollback configuration');
+      handleAPIError(err, 'rollback configuration');
       throw err;
     }
   };
@@ -280,7 +273,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'update settings');
+      handleAPIError(err, 'update settings');
       throw err;
     }
   };
@@ -295,7 +288,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete alert');
+      handleAPIError(err, 'delete alert');
       throw err;
     }
   };
@@ -310,7 +303,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'create user');
+      handleAPIError(err, 'create user');
       throw err;
     }
   };
@@ -323,7 +316,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete user');
+      handleAPIError(err, 'delete user');
       throw err;
     }
   };
@@ -342,7 +335,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'generate report');
+      handleAPIError(err, 'generate report');
       throw err;
     }
   };
@@ -355,7 +348,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await refreshData();
       }
     } catch (err) {
-      handleError(err, 'delete report');
+      handleAPIError(err, 'delete report');
       throw err;
     }
   };

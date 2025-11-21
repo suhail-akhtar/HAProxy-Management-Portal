@@ -13,7 +13,6 @@
  */
 
 const http = require('http');
-const https = require('https');
 
 const BASE_URL = 'http://localhost:5555';
 const API_URL = `${BASE_URL}/api`;
