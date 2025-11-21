@@ -6,6 +6,7 @@ import compression from 'compression';
 import { createServer } from 'http';
 import { config } from './config';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { generalLimiter } from './middleware/rateLimiter';
 import { WebSocketService } from './services/websocketService';
 
 // Import routes
@@ -26,6 +27,9 @@ app.use(cors({
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Apply general rate limiting to all API routes
+app.use('/api', generalLimiter);
 
 // Logging
 if (config.nodeEnv === 'development') {
