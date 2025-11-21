@@ -19,10 +19,18 @@ import { Frontend, Backend, Server, Stats } from '../models/types';
 export class HAProxyService {
   private dataPlaneEnabled: boolean = false;
   private runtimeEnabled: boolean = false;
+  private initPromise: Promise<void>;
 
   constructor() {
-    // Check if APIs are available
-    this.checkAvailability();
+    // Start availability check but don't block constructor
+    this.initPromise = this.checkAvailability();
+  }
+
+  /**
+   * Wait for initialization to complete
+   */
+  async waitForInit(): Promise<void> {
+    await this.initPromise;
   }
 
   /**
@@ -264,30 +272,39 @@ export class HAProxyService {
    * Update server status (hybrid approach)
    * Uses Runtime API for immediate effect, then Data Plane API for persistence
    */
-  async updateServerStatus(backend: string, server: string, status: 'up' | 'down' | 'maint'): Promise<any> {
+  async updateServerStatus(backend: string, server: string, status: 'up' | 'down' | 'maint'): Promise<{ success: boolean; message?: string }> {
     // Apply immediately via Runtime API
     if (this.runtimeEnabled) {
-      switch (status) {
-        case 'up':
-          await haproxyRuntimeClient.enableServer(backend, server);
-          break;
-        case 'down':
-          await haproxyRuntimeClient.disableServer(backend, server);
-          break;
-        case 'maint':
-          await haproxyRuntimeClient.setServerMaint(backend, server);
-          break;
+      try {
+        switch (status) {
+          case 'up':
+            await haproxyRuntimeClient.enableServer(backend, server);
+            break;
+          case 'down':
+            await haproxyRuntimeClient.disableServer(backend, server);
+            break;
+          case 'maint':
+            await haproxyRuntimeClient.setServerMaint(backend, server);
+            break;
+        }
+      } catch (error) {
+        console.warn('Runtime API update failed:', (error as Error).message);
       }
     }
 
     // Persist via Data Plane API
     if (this.dataPlaneEnabled) {
-      const serverConfig = await haproxyDataPlaneClient.getServer(backend, server);
-      serverConfig.data.maintenance = status === 'maint' ? 'enabled' : 'disabled';
-      return await haproxyDataPlaneClient.updateServer(backend, server, serverConfig.data);
+      try {
+        const serverConfig = await haproxyDataPlaneClient.getServer(backend, server);
+        serverConfig.data.maintenance = status === 'maint' ? 'enabled' : 'disabled';
+        await haproxyDataPlaneClient.updateServer(backend, server, serverConfig.data);
+        return { success: true, message: 'Server status updated successfully' };
+      } catch (error) {
+        return { success: false, message: (error as Error).message };
+      }
     }
 
-    return { success: true };
+    return { success: true, message: 'Server status updated (runtime only)' };
   }
 
   /**

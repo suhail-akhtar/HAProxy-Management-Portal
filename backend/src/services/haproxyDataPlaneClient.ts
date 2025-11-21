@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { config } from '../config';
+import { config as envConfig } from '../config';
 
 /**
  * HAProxy Data Plane API Client
